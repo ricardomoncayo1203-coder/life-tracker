@@ -7,8 +7,8 @@
 // ---- Supabase (public values — safe in the client, protected by RLS) ----
 // Leave as-is to run local-only (data lives in this browser).
 // After the 15-min setup, paste your Project URL + anon public key here.
-export const SUPABASE_URL  = "__SUPABASE_URL__";
-export const SUPABASE_ANON = "__SUPABASE_ANON__";
+export const SUPABASE_URL  = "https://ydzeeoypylgfonfchknx.supabase.co";
+export const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkemVlb3lweWxnZm9uZmNoa254Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNzg0MDksImV4cCI6MjA5ODg1NDQwOX0.lEsbjvGaoXB-ilVgzU8LxZdgNg8GzCYZZ79Wy15Cp7w";
 
 export const supabaseConfigured = () =>
   SUPABASE_URL.startsWith("http") && SUPABASE_ANON.length > 20;

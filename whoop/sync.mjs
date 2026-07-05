@@ -140,18 +140,27 @@ async function refreshAccess(s) {
 
 async function getPaged(access, pathName, start) {
   const records = [];
-  let nextToken;
-  for (let i = 0; i < 40; i++) {
+  let nextToken, pages = 0;
+  const MAX_PAGES = 500; // 500 × 25 records — years of history
+  while (pages < MAX_PAGES) {
     const qs = new URLSearchParams({ limit: "25", start });
     if (nextToken) qs.set("nextToken", nextToken);
     const res = await fetch(`${API}/${pathName}?${qs}`, { headers: { Authorization: `Bearer ${access}` } });
+    if (res.status === 429) { // rate-limited — wait and retry the same page
+      const wait = Math.min(90, parseInt(res.headers.get("retry-after") || "30", 10) + 1);
+      log(`rate-limited on ${pathName} — waiting ${wait}s…`);
+      await new Promise((r) => setTimeout(r, wait * 1000));
+      continue;
+    }
     if (res.status === 401) die("WHOOP rejected the token (401) — run `node whoop/sync.mjs auth` again.");
     if (!res.ok) die(`GET ${pathName} → ${res.status}: ${await res.text()}`);
     const body = await res.json();
     records.push(...(body.records || []));
     nextToken = body.next_token || body.nextToken;
+    pages++;
     if (!nextToken) break;
   }
+  if (pages >= MAX_PAGES) log(`⚠ ${pathName}: hit the ${MAX_PAGES}-page cap — oldest records may be missing`);
   return records;
 }
 
@@ -231,12 +240,14 @@ async function upsertSupabase(days, s) {
     const { workout_sports, ...rest } = v;
     return { user_id: uid, day: d, ...rest, workout_sports: workout_sports || null, raw: null, synced_at: new Date().toISOString() };
   });
-  const res = await fetch(`${s.SUPABASE_URL}/rest/v1/whoop_daily?on_conflict=user_id,day`, {
-    method: "POST",
-    headers: { ...H, "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
-    body: JSON.stringify(rows),
-  });
-  if (!res.ok) die(`Supabase upsert failed ${res.status}: ${await res.text()}`);
+  for (let i = 0; i < rows.length; i += 500) { // chunked for large backfills
+    const res = await fetch(`${s.SUPABASE_URL}/rest/v1/whoop_daily?on_conflict=user_id,day`, {
+      method: "POST",
+      headers: { ...H, "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(rows.slice(i, i + 500)),
+    });
+    if (!res.ok) die(`Supabase upsert failed ${res.status}: ${await res.text()}`);
+  }
   log(`Upserted ${rows.length} day(s) → Supabase whoop_daily`);
 }
 

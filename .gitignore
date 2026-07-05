@@ -1,0 +1,12 @@
+# secrets — never commit (they live outside the repo anyway)
+*.env
+.tracker-secrets*
+service_role*
+
+# personal health data — never in a public repo
+whoop.json
+
+# os / editor
+.DS_Store
+.vscode/
+node_modules/

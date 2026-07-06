@@ -3,8 +3,10 @@
 // ============================================================
 import * as S from "./store.js";
 import { el, clear, ring, heatmap, weightChart, ratingBars, sparkline, iconSVG } from "./ui.js";
+import { coachNotes, missedYesterday } from "./coach.js";
 import {
   HABITS, RATINGS, WEIGHT_TARGETS, WEIGHT_UNIT, OWNER, LS, RECOVERY_BANDS,
+  ROUTINES, AFFIRMATION,
 } from "./config.js";
 
 const view = document.getElementById("view");
@@ -17,6 +19,7 @@ let lastPop = null;
 const uiState = {
   history: { habit: "overall", expanded: new Set() },
   review: { weekOffset: 0 },
+  routines: null, // { morning, night } — seeded by time of day on first render
 };
 
 /* ---------------- boot ---------------- */
@@ -54,7 +57,10 @@ function toggleTheme() {
 }
 
 /* ---------------- auth gate ---------------- */
-const needsLogin = () => S.isCloud() && !S.getUser();
+// ?preview bypasses the gate for UI work only — no session means RLS returns
+// no data, so nothing personal is exposed; the app just renders empty/local.
+const isPreview = () => new URLSearchParams(location.search).has("preview");
+const needsLogin = () => S.isCloud() && !S.getUser() && !isPreview();
 function renderGate() {
   if (needsLogin()) { app.hidden = true; renderLogin(); }
   else { document.getElementById("login")?.remove(); app.hidden = false; renderRoute(); }
@@ -156,15 +162,32 @@ function renderToday() {
       parts.join(" · ")));
   }
 
+  // coach's note — the app talks back
+  const notes = coachNotes(2);
+  const coachCard = el("div", { class: "card coach" });
+  coachCard.append(el("div", { class: "eyebrow-row" }, el("span", { class: "eyebrow" }, "Coach's note")));
+  notes.forEach((n) => coachCard.append(
+    el("div", { class: `coach__note coach__note--${n.kind}` }, n.text)));
+
   // ring + whisper
   const left = 6 - count;
   const whisper = count === 6 ? "A good day, logged." : count === 0 ? "The day awaits." : `${left} to go.`;
   const ringCard = el("div", { class: "card" + (count === 6 ? " sealed" : "") },
     el("div", { class: "ring-wrap" }, ring(count, 6), el("div", { class: "whisper" }, whisper)));
 
-  // checklist
+  // checklist (with reclaim markers for yesterday's misses)
+  const missed = missedYesterday(date);
   const list = el("div", { class: "card checklist" });
-  HABITS.forEach((h) => list.append(renderCrow(h, d, date)));
+  HABITS.forEach((h) => list.append(renderCrow(h, d, date, missed)));
+
+  // routines — the coach's scripts
+  if (uiState.routines === null) {
+    const hr = new Date().getHours();
+    uiState.routines = { morning: hr < 12, night: hr >= 18 };
+  }
+  const routines = el("div", { class: "section-gap" },
+    routineCard("morning", ROUTINES.morning),
+    routineCard("night", ROUTINES.night));
 
   // sync banner
   const sy = S.syncState();
@@ -172,15 +195,50 @@ function renderToday() {
   if (!sy.cloud) banner = el("div", { class: "banner", html: `<span class="dot"></span><span>Local only — finish setup to sync phone ↔ laptop.</span>` });
   else if (sy.pending) banner = el("div", { class: "banner", html: `<span class="dot"></span><span>${sy.pending} change(s) waiting to sync.</span>` });
 
-  view.append(head, ringCard, list);
+  view.append(head, coachCard, ringCard, list, routines);
   if (banner) view.append(el("div", { style: "margin-top:16px" }, banner));
 }
 
-function renderCrow(h, d, date) {
+/* expandable routine card — the coach's script for the bookends of the day */
+function routineCard(id, r) {
+  const open = uiState.routines[id];
+  const card = el("div", { class: "card routine" + (open ? " open" : "") });
+  const head = el("button", { class: "routine__head", "aria-expanded": open ? "true" : "false" },
+    el("div", {},
+      el("div", { class: "h-section", style: "font-size:15px" }, r.title),
+      el("div", { class: "eyebrow", style: "margin-top:2px" }, r.window)),
+    el("span", { class: "routine__chev", html: `<svg viewBox="0 0 24 24" class="ic"><path d="M6 9l6 6 6-6"/></svg>` }));
+  head.addEventListener("click", () => { uiState.routines[id] = !open; renderRoute(); });
+  card.append(head);
+  if (open) {
+    const ol = el("ol", { class: "routine__steps" });
+    r.steps.forEach((s) => ol.append(el("li", {}, s)));
+    card.append(ol);
+    if (r.affirmation) card.append(affirmationBlock());
+  }
+  return card;
+}
+
+function affirmationBlock() {
+  const b = el("div", { class: "affirmation" });
+  b.append(el("div", { class: "eyebrow" }, `${AFFIRMATION.title} · ${AFFIRMATION.source}`));
+  if (AFFIRMATION.text) {
+    b.append(el("div", { class: "affirmation__text" }, AFFIRMATION.text));
+  } else {
+    b.append(el("div", { class: "affirmation__empty" },
+      "Not yet engraved — dictate your statement to Claude and it will live here, word for word."));
+  }
+  return b;
+}
+
+function renderCrow(h, d, date, missed = new Set()) {
   const done = h.hit(d);
   const crow = el("div", { class: "crow" + (done ? " done" : "") });
-  const main = el("div", { class: "crow__main" },
-    el("div", { class: "crow__label" }, h.label));
+  const label = el("div", { class: "crow__label" }, h.label);
+  if (missed.has(h.id) && !done) {
+    label.append(el("span", { class: "miss-dot", title: "Missed yesterday — reclaim it" }));
+  }
+  const main = el("div", { class: "crow__main" }, label);
   const control = el("div", { class: "crow__control" });
 
   const pop = (node, field) => { if (lastPop === field) { node.classList.add("pop"); lastPop = null; } };

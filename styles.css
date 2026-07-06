@@ -589,6 +589,62 @@ button, .crow--tap, .tab, .chip, .seg, .pip, .toggle { touch-action: manipulatio
 /* ---------- Whisper: settle in ---------- */
 .whisper { animation: fade 0.8s ease 0.3s both; }
 
+/* ---------- Coach ---------- */
+.coach { padding: 16px 18px; }
+.coach__note {
+  font-family: var(--serif); font-size: 14.5px; line-height: 1.55;
+  color: var(--text-primary); padding: 6px 0 6px 14px; position: relative;
+}
+.coach__note + .coach__note { border-top: 0.5px solid var(--rule); margin-top: 4px; padding-top: 12px; }
+.coach__note::before {
+  content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; border-radius: 2px;
+  background: var(--accent);
+}
+.coach__note--adjust::before { background: var(--warn); }
+.coach__note--honor::before { background: var(--positive); }
+
+/* reclaim marker — missed yesterday */
+.miss-dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 999px;
+  background: var(--warn); margin-left: 8px; vertical-align: 2px;
+}
+
+/* ---------- Routines ---------- */
+.routine { padding: 0; overflow: hidden; }
+.routine + .routine { margin-top: 12px; }
+.routine__head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 15px 18px; text-align: left; gap: 12px;
+}
+.routine__chev .ic { width: 16px; height: 16px; color: var(--text-muted); transition: transform 0.25s ease; }
+.routine.open .routine__chev .ic { transform: rotate(180deg); }
+.routine__steps {
+  margin: 0; padding: 2px 18px 16px 18px; list-style: none; counter-reset: step;
+}
+.routine__steps li {
+  counter-increment: step; position: relative; padding: 8px 0 8px 34px;
+  font-size: 13px; color: var(--text-secondary); border-top: 0.5px solid var(--rule);
+}
+.routine__steps li::before {
+  content: counter(step, decimal-leading-zero); position: absolute; left: 0; top: 8px;
+  font-family: var(--mono); font-size: 11px; color: var(--accent);
+}
+
+/* the statement — engraved */
+.affirmation {
+  margin: 0 18px 18px; padding: 14px 16px;
+  border: 0.5px solid var(--rule-strong); border-radius: 10px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, var(--surface-1)), var(--surface-1));
+}
+.affirmation__text {
+  margin-top: 8px; font-family: var(--serif); font-size: 15px; line-height: 1.65;
+  color: var(--text-primary); white-space: pre-line;
+}
+.affirmation__empty {
+  margin-top: 8px; font-family: var(--serif); font-style: italic;
+  font-size: 13.5px; color: var(--text-muted);
+}
+
 /* ---------- WHOOP vitals ---------- */
 .whoop-line {
   display: flex; align-items: center; gap: 8px; margin-top: 10px;

@@ -94,12 +94,53 @@ export const WORKOUT_TYPES = ["Push", "Pull", "Legs", "Core", "Gym", "Sprint", "
 export const WORKOUT_BY_DOW = ["Rest", "Push", "Pull", "Rest", "Legs", "Core", "Gym"];
 
 // ---- Weekly self-ratings (1–5) --------------------------------------------
+// Subjective-only dimensions — nothing a sensor already measures.
+// NOTE: "sleep_1_5" DB column is reused to store Discipline (avoids a migration);
+// labels are what the UI and exports show.
 export const RATINGS = [
-  { key: "sleep_1_5",     label: "Sleep" },
   { key: "nutrition_1_5", label: "Nutrition" },
-  { key: "training_1_5",  label: "Training" },
+  { key: "training_1_5",  label: "Training quality" },
   { key: "mental_1_5",    label: "Mental" },
+  { key: "sleep_1_5",     label: "Discipline" },
 ];
+
+// ---- Routines (the coach's scripts — steps shown in Today) -----------------
+export const ROUTINES = {
+  morning: {
+    title: "Morning routine",
+    window: "on waking · ~12 min",
+    steps: [
+      "500 ml water immediately on waking",
+      "Box breathing — 2 min (8 cycles of 4-4-4-4)",
+      "Read your statement aloud — with feeling (see below)",
+      "Intention — say today's one main task out loud",
+      "Sunlight — 5 min outside within 30 min of waking",
+      "Cold face splash — 30 sec",
+    ],
+    affirmation: true,
+  },
+  night: {
+    title: "Night routine",
+    window: "from 9:00 pm · lights out 10:00 pm",
+    steps: [
+      "No screens after 9:00 pm — no work email or Slack after dinner",
+      "Girlfriend call",
+      "Read your statement aloud — visualize it already yours",
+      "3-line journal — went well · improve · grateful",
+      "In bed by 10:00 pm (7–9 h floor)",
+    ],
+    affirmation: true,
+  },
+};
+
+// ---- The statement (Think and Grow Rich, Ch. 2 — Definite Chief Aim) -------
+// Read aloud twice daily: on waking and before sleep.
+// text: null shows an invitation to engrave it; Ricardo dictates, Claude engraves.
+export const AFFIRMATION = {
+  title: "Definite Chief Aim",
+  source: "Think and Grow Rich — Ch. 2",
+  text: null,
+};
 
 // ---- Progress-to-goal targets (weight, lb) --------------------------------
 // Source: 06_Health & Fitness/6-Month High-Performance Plan.md

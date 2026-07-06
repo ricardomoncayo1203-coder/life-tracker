@@ -63,7 +63,9 @@ function renderLogin() {
   if (document.getElementById("login")) return;
   const node = el("div", { id: "login", class: "login" });
   const card = el("div", { class: "login__card fade-in" });
-  card.innerHTML = `<div class="crest">R</div><h1>Command Console</h1><p>Sign in to sync across your devices.</p>`;
+  card.innerHTML = `
+    <div class="beams" aria-hidden="true"><span class="b-top"></span><span class="b-right"></span><span class="b-bottom"></span><span class="b-left"></span></div>
+    <div class="crest" style="margin:0 auto 22px">R</div><h1>Command Console</h1><p>Sign in to sync across your devices.</p>`;
   const email = el("input", { type: "email", placeholder: "you@email.com", autocomplete: "email" });
   const btn = el("button", { class: "btn btn--primary btn--block", text: "Send magic link" });
   const note = el("div", { class: "login__note" });

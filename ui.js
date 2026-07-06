@@ -100,9 +100,11 @@ export function heatmap(levelFor, { weeks = 13 } = {}) {
       if (date > today) { grid.append(el("div", { class: "hm-cell", style: "visibility:hidden" })); continue; }
       const lvl = levelFor(date);
       const nice = parseISO(date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      const tip = `${nice} — ${lvl == null ? "no entry" : `level ${lvl}/4`}`;
       const cell = el("div", {
         class: "hm-cell" + (date === today ? " today" : ""),
-        title: `${nice} — ${lvl == null ? "no entry" : `level ${lvl}/4`}`,
+        "aria-label": tip,
+        dataset: { tip },
       });
       if (lvl != null) cell.dataset.l = String(lvl);
       grid.append(cell);
@@ -115,7 +117,22 @@ export function heatmap(levelFor, { weeks = 13 } = {}) {
     scroll);
   const legend = el("div", { class: "hm-legend" }, "less",
     ...[0,1,2,3,4].map((l) => { const c = el("div", { class: "hm-cell" }); c.dataset.l = String(l); return c; }), "more");
-  return el("div", { class: "heatmap" }, body, legend);
+  const wrap = el("div", { class: "heatmap" }, body, legend);
+
+  // interactive tooltip — one element, positioned over the hovered cell
+  const tip = el("div", { class: "hm-tip", "aria-hidden": "true" });
+  wrap.append(tip);
+  grid.addEventListener("mouseover", (e) => {
+    const c = e.target.closest(".hm-cell");
+    if (!c || !c.dataset.tip) return;
+    tip.textContent = c.dataset.tip;
+    const wr = wrap.getBoundingClientRect(), cr = c.getBoundingClientRect();
+    tip.style.left = `${cr.left - wr.left + cr.width / 2}px`;
+    tip.style.top = `${cr.top - wr.top}px`;
+    tip.classList.add("show");
+  });
+  grid.addEventListener("mouseleave", () => tip.classList.remove("show"));
+  return wrap;
 }
 
 /* ============================================================

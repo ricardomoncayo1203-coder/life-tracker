@@ -352,8 +352,38 @@ svg { display: block; }
 .bignum input:focus { outline: none; border-color: var(--accent); }
 
 /* ---------- Login ---------- */
-.login { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
-.login__card { width: 100%; max-width: 360px; text-align: center; }
+.login {
+  position: fixed; inset: 0; z-index: 60; /* opaque overlay — covers the app shell when signed out */
+  display: grid; place-items: center; padding: 24px;
+  background: radial-gradient(700px 480px at 50% 38%,
+    color-mix(in srgb, var(--accent) 9%, var(--bg-void)) 0%, var(--bg-void) 70%);
+}
+.login__card {
+  width: 100%; max-width: 380px; text-align: center;
+  position: relative; overflow: hidden;
+  background: var(--surface-1); border: 0.5px solid var(--rule); border-radius: 16px;
+  padding: 40px 30px 32px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+/* traveling light beams along the card border (21st.dev pattern, steel restraint) */
+.beams { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
+.beams span { position: absolute; opacity: 0.5; }
+.beams .b-top, .beams .b-bottom {
+  height: 1.5px; width: 45%;
+  background: linear-gradient(90deg, transparent, var(--accent-bright), transparent);
+}
+.beams .b-left, .beams .b-right {
+  width: 1.5px; height: 45%;
+  background: linear-gradient(180deg, transparent, var(--accent-bright), transparent);
+}
+.beams .b-top    { top: 0; left: 0;    animation: beam-h 8s linear infinite; }
+.beams .b-right  { top: 0; right: 0;   animation: beam-v 8s linear infinite; animation-delay: 2s; }
+.beams .b-bottom { bottom: 0; right: 0; animation: beam-h-rev 8s linear infinite; animation-delay: 4s; }
+.beams .b-left   { bottom: 0; left: 0;  animation: beam-v-rev 8s linear infinite; animation-delay: 6s; }
+@keyframes beam-h     { 0% { transform: translateX(-110%); } 100% { transform: translateX(260%); } }
+@keyframes beam-h-rev { 0% { transform: translateX(110%); }  100% { transform: translateX(-260%); } }
+@keyframes beam-v     { 0% { transform: translateY(-110%); } 100% { transform: translateY(260%); } }
+@keyframes beam-v-rev { 0% { transform: translateY(110%); }  100% { transform: translateY(-260%); } }
 .login__card .crest { margin: 0 auto 22px; }
 .login h1 { font-family: var(--serif); font-weight: 400; font-size: 24px; color: var(--text-primary); margin-bottom: 6px; }
 .login p { font-size: 13px; color: var(--text-muted); margin-bottom: 22px; }
@@ -537,6 +567,19 @@ button, .crow--tap, .tab, .chip, .seg, .pip, .toggle { touch-action: manipulatio
 .hm-grid { overflow: visible; padding-bottom: 0; }
 .hm-cell { transition: transform 0.12s ease; }
 @media (hover: hover) { .hm-cell:hover { transform: scale(1.3); } }
+
+/* interactive heatmap tooltip (contribution-graph pattern) */
+.heatmap { position: relative; }
+.hm-tip {
+  position: absolute; z-index: 5; pointer-events: none;
+  background: var(--surface-2); border: 0.5px solid var(--rule-strong); border-radius: 8px;
+  padding: 5px 10px; white-space: nowrap;
+  font-family: var(--mono); font-size: 11px; color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  transform: translate(-50%, calc(-100% - 8px));
+  opacity: 0; transition: opacity 0.12s ease;
+}
+.hm-tip.show { opacity: 1; }
 
 /* ---------- Chart: area fill + last value ---------- */
 .chart .area { opacity: 0.9; }

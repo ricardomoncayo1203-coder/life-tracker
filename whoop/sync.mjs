@@ -230,11 +230,17 @@ function writeLocal(days) {
 async function upsertSupabase(days, s) {
   if (!s.SUPABASE_URL || !s.SUPABASE_SERVICE_KEY) { log("Supabase not configured — local file only (fine before setup)."); return; }
   const H = { apikey: s.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${s.SUPABASE_SERVICE_KEY}` };
-  // single-user project: resolve the one user id via the admin API
-  const ur = await fetch(`${s.SUPABASE_URL}/auth/v1/admin/users?per_page=1`, { headers: H });
-  if (!ur.ok) { log(`could not resolve user (auth admin ${ur.status}) — skipped cloud upsert`); return; }
-  const uid = (await ur.json()).users?.[0]?.id;
-  if (!uid) { log("no user exists yet in Supabase — sign into the app once, then re-run sync"); return; }
+  // Pinned owner id (set in secrets) — REQUIRED once more than one user exists,
+  // so a second account can never receive Ricardo's strap data.
+  let uid = s.SUPABASE_USER_ID;
+  if (!uid) {
+    const ur = await fetch(`${s.SUPABASE_URL}/auth/v1/admin/users?per_page=2`, { headers: H });
+    if (!ur.ok) { log(`could not resolve user (auth admin ${ur.status}) — skipped cloud upsert`); return; }
+    const users = (await ur.json()).users || [];
+    if (!users.length) { log("no user exists yet in Supabase — sign into the app once, then re-run sync"); return; }
+    if (users.length > 1) die("Multiple users exist — set SUPABASE_USER_ID in the secrets file to pin the WHOOP owner.");
+    uid = users[0].id;
+  }
 
   // PostgREST bulk upsert requires identical keys on every row — normalize to the full column set.
   const COLS = ["recovery_score","hrv_ms","rhr_bpm","spo2_pct","skin_temp_c","sleep_hours",

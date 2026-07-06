@@ -236,9 +236,15 @@ async function upsertSupabase(days, s) {
   const uid = (await ur.json()).users?.[0]?.id;
   if (!uid) { log("no user exists yet in Supabase — sign into the app once, then re-run sync"); return; }
 
+  // PostgREST bulk upsert requires identical keys on every row — normalize to the full column set.
+  const COLS = ["recovery_score","hrv_ms","rhr_bpm","spo2_pct","skin_temp_c","sleep_hours",
+    "sleep_performance_pct","sleep_consistency_pct","sleep_efficiency_pct","respiratory_rate",
+    "day_strain","avg_hr_bpm","max_hr_bpm","workout_count"];
+  const now = new Date().toISOString();
   const rows = Object.entries(days).map(([d, v]) => {
-    const { workout_sports, ...rest } = v;
-    return { user_id: uid, day: d, ...rest, workout_sports: workout_sports || null, raw: null, synced_at: new Date().toISOString() };
+    const row = { user_id: uid, day: d, workout_sports: v.workout_sports || null, raw: null, synced_at: now };
+    for (const c of COLS) row[c] = v[c] ?? (c === "workout_count" ? 0 : null);
+    return row;
   });
   for (let i = 0; i < rows.length; i += 500) { // chunked for large backfills
     const res = await fetch(`${s.SUPABASE_URL}/rest/v1/whoop_daily?on_conflict=user_id,day`, {

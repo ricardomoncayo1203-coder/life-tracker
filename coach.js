@@ -28,8 +28,9 @@ const RULES = [
   // 1 — the statement, morning and night (Think and Grow Rich)
   function statement(ctx) {
     if (!isMorning() && !isEvening()) return null;
+    const engraved = S.getAffirmation() || AFFIRMATION.text;
     const when = isMorning() ? "Begin with the statement" : "Before the light goes out";
-    const tail = AFFIRMATION.text
+    const tail = engraved
       ? (isMorning() ? " — read it aloud, with feeling." : " — read it aloud and see it already yours.")
       : " — your Definite Chief Aim isn't engraved yet. Dictate it to Claude and it will live here.";
     return { text: `${when}${tail}`, kind: "push" };

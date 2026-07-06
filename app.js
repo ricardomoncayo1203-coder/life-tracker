@@ -29,6 +29,7 @@ function boot() {
   S.initSupabase();
   if (location.search.includes("demo")) S.seedDemo();
   S.loadWhoop(); // async — re-renders via onChange when data lands
+  S.loadAffirmation();
 
   document.querySelectorAll(".tab").forEach((t) =>
     t.addEventListener("click", () => setRoute(t.dataset.route)));
@@ -252,10 +253,11 @@ function routineCard(id, r) {
 }
 
 function affirmationBlock() {
+  const text = S.getAffirmation() || AFFIRMATION.text;
   const b = el("div", { class: "affirmation" });
   b.append(el("div", { class: "eyebrow" }, `${AFFIRMATION.title} · ${AFFIRMATION.source}`));
-  if (AFFIRMATION.text) {
-    b.append(el("div", { class: "affirmation__text" }, AFFIRMATION.text));
+  if (text) {
+    b.append(el("div", { class: "affirmation__text" }, text));
   } else {
     b.append(el("div", { class: "affirmation__empty" },
       "Not yet engraved — dictate your statement to Claude and it will live here, word for word."));

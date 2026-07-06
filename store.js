@@ -167,6 +167,27 @@ export function weekSummary(weekStart) {
 }
 
 /* ============================================================
+   AFFIRMATION — the Definite Chief Aim. Private content:
+   lives in the `target` table (key='affirmation', note=text),
+   never in this public repo. Cached locally after first load.
+   ============================================================ */
+let affirmationText = null;
+export const getAffirmation = () => affirmationText;
+export async function loadAffirmation() {
+  affirmationText = (() => { try { return localStorage.getItem("lt.v1.affirm") || null; } catch { return null; } })();
+  if (affirmationText) emit();
+  if (!sb || !currentUser) return;
+  try {
+    const { data } = await sb.from("target").select("note").eq("key", "affirmation").maybeSingle();
+    if (data?.note) {
+      affirmationText = data.note;
+      try { localStorage.setItem("lt.v1.affirm", data.note); } catch {}
+      emit();
+    }
+  } catch { /* not set yet */ }
+}
+
+/* ============================================================
    WHOOP (read-only in the app; whoop/sync.mjs produces the data)
    Cloud mode: whoop_daily table · Local mode: ./whoop.json
    ============================================================ */
@@ -271,7 +292,7 @@ export function initSupabase() {
 function setUser(u) {
   const changed = (currentUser?.id) !== (u?.id);
   currentUser = u; emitAuth();
-  if (u && changed) { pushAllLocal().then(pull).then(loadWhoop); } // upload local-first data, merge server, refresh whoop
+  if (u && changed) { pushAllLocal().then(pull).then(loadWhoop).then(loadAffirmation); } // upload local, merge server, whoop, statement
 }
 
 export async function signIn(email) {

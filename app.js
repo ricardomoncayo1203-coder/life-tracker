@@ -75,13 +75,40 @@ function renderLogin() {
   const email = el("input", { type: "email", placeholder: "you@email.com", autocomplete: "email" });
   const btn = el("button", { class: "btn btn--primary btn--block", text: "Send magic link" });
   const note = el("div", { class: "login__note" });
+  const code = el("input", {
+    type: "text", inputmode: "numeric", autocomplete: "one-time-code",
+    placeholder: "6-digit code from the email", maxLength: 6, class: "hidden",
+  });
+  const verifyBtn = el("button", { class: "btn btn--block hidden", text: "Verify code" });
+
+  const friendly = (e) => {
+    const m = (e?.message || "").toLowerCase();
+    if (m.includes("rate limit")) return "Email limit reached — Supabase's mailer allows a few per hour. Wait a bit, then try once.";
+    if (m.includes("expired") || m.includes("invalid")) return "Code invalid or expired — request a fresh email and use its code.";
+    return e?.message || "Something failed — try again.";
+  };
+
   btn.addEventListener("click", async () => {
     if (!email.value.includes("@")) { email.focus(); return; }
     btn.textContent = "Sending…"; btn.disabled = true;
-    try { await S.signIn(email.value.trim()); note.textContent = "Check your email for the link."; }
-    catch (e) { note.textContent = "Couldn't send — check the address."; btn.disabled = false; btn.textContent = "Send magic link"; }
+    try {
+      await S.signIn(email.value.trim());
+      note.textContent = "Email sent. On this device? Just type the 6-digit code below.";
+      code.classList.remove("hidden"); verifyBtn.classList.remove("hidden");
+      btn.textContent = "Resend"; btn.disabled = false; btn.classList.remove("btn--primary");
+      code.focus();
+    } catch (e) {
+      note.textContent = friendly(e);
+      btn.disabled = false; btn.textContent = "Send magic link";
+    }
   });
-  card.append(email, btn, note);
+  verifyBtn.addEventListener("click", async () => {
+    if (code.value.trim().length < 6) { code.focus(); return; }
+    verifyBtn.textContent = "Verifying…"; verifyBtn.disabled = true;
+    try { await S.verifyCode(email.value.trim(), code.value); /* auth listener takes it from here */ }
+    catch (e) { note.textContent = friendly(e); verifyBtn.disabled = false; verifyBtn.textContent = "Verify code"; }
+  });
+  card.append(email, btn, code, verifyBtn, note);
   node.append(card);
   document.body.append(node);
 }

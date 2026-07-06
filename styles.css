@@ -8,25 +8,26 @@
 /* ---------- Theme tokens ---------- */
 :root,
 [data-theme="gunmetal"] {
-  --bg-void: #0A0B0D;
-  --surface-1: #14161A;
-  --surface-2: #1C1F24;
-  --rule: #23262B;
-  --rule-strong: #2E3540;
-  --text-primary: #E8E6E1;
-  --text-secondary: #9AA0AB;
-  --text-muted: #6E7480;
-  --accent: #8A93A6;
-  --accent-bright: #C7CDD6;
+  /* "midnight" — dark blue-black + silver */
+  --bg-void: #070A12;
+  --surface-1: #0E1320;
+  --surface-2: #161D2C;
+  --rule: #1D2536;
+  --rule-strong: #2A3550;
+  --text-primary: #E7E9F0;
+  --text-secondary: #96A0B5;
+  --text-muted: #68738D;
+  --accent: #8C99B7;
+  --accent-bright: #C9D2E5;
   --positive: #7FA88E;
   --warn: #C7A76B;
   --danger: #B36B6B;
   /* heatmap ramp — hm0 sits just above the card so the empty grid still reads */
-  --hm0: #1C1F24;
-  --hm1: #2E3540;
-  --hm2: #586576;
-  --hm3: #8A93A6;
-  --hm4: #C7CDD6;
+  --hm0: #161D2C;
+  --hm1: #2A3550;
+  --hm2: #506180;
+  --hm3: #8C99B7;
+  --hm4: #C9D2E5;
 }
 
 [data-theme="gold"] {

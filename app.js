@@ -76,10 +76,10 @@ function renderLogin() {
   const btn = el("button", { class: "btn btn--primary btn--block", text: "Send magic link" });
   const note = el("div", { class: "login__note" });
   const code = el("input", {
-    type: "text", inputmode: "numeric", autocomplete: "one-time-code",
-    placeholder: "6-digit code from the email", maxLength: 6, class: "hidden",
+    type: "text", autocomplete: "one-time-code",
+    placeholder: "paste the sign-in link here", class: "hidden",
   });
-  const verifyBtn = el("button", { class: "btn btn--block hidden", text: "Verify code" });
+  const verifyBtn = el("button", { class: "btn btn--block hidden", text: "Verify" });
 
   const friendly = (e) => {
     const m = (e?.message || "").toLowerCase();
@@ -93,7 +93,7 @@ function renderLogin() {
     btn.textContent = "Sending…"; btn.disabled = true;
     try {
       await S.signIn(email.value.trim());
-      note.textContent = "Email sent. On this device? Just type the 6-digit code below.";
+      note.textContent = "Email sent. In Mail: long-press the sign-in link → Copy Link → paste it below. (Don't tap the link — that uses it up in Safari.)";
       code.classList.remove("hidden"); verifyBtn.classList.remove("hidden");
       btn.textContent = "Resend"; btn.disabled = false; btn.classList.remove("btn--primary");
       code.focus();
@@ -103,10 +103,15 @@ function renderLogin() {
     }
   });
   verifyBtn.addEventListener("click", async () => {
-    if (code.value.trim().length < 6) { code.focus(); return; }
+    const v = code.value.trim();
+    if (!v) { code.focus(); return; }
     verifyBtn.textContent = "Verifying…"; verifyBtn.disabled = true;
-    try { await S.verifyCode(email.value.trim(), code.value); /* auth listener takes it from here */ }
-    catch (e) { note.textContent = friendly(e); verifyBtn.disabled = false; verifyBtn.textContent = "Verify code"; }
+    try {
+      if (v.includes("://") || v.includes("token")) await S.verifyPastedLink(v);
+      else if (/^\d{6}$/.test(v)) await S.verifyCode(email.value.trim(), v); // 6-digit path, if ever available
+      else throw new Error("Paste the full sign-in link from the email (long-press it → Copy Link).");
+      /* auth listener takes it from here */
+    } catch (e) { note.textContent = friendly(e); verifyBtn.disabled = false; verifyBtn.textContent = "Verify"; }
   });
   card.append(email, btn, code, verifyBtn, note);
   node.append(card);

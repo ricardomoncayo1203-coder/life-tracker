@@ -289,6 +289,20 @@ export async function verifyCode(email, token) {
   const { error } = await sb.auth.verifyOtp({ email, token: token.trim(), type: "email" });
   if (error) throw error;
 }
+// Pasted magic LINK (long-press → Copy Link in Mail) — extracts the token hash
+// and verifies inside this context. Works with Supabase's locked default template.
+export async function verifyPastedLink(url) {
+  if (!sb) throw new Error("cloud-not-configured");
+  let token_hash = null;
+  try { const u = new URL(url.trim()); token_hash = u.searchParams.get("token") || u.searchParams.get("token_hash"); } catch {}
+  if (!token_hash) throw new Error("That doesn't look like the sign-in link — long-press it in Mail and choose Copy Link.");
+  const { error } = await sb.auth.verifyOtp({ token_hash, type: "email" });
+  if (error) {
+    // legacy type fallback
+    const retry = await sb.auth.verifyOtp({ token_hash, type: "magiclink" });
+    if (retry.error) throw error;
+  }
+}
 
 /* queue + flush */
 function queue(table, payload) {

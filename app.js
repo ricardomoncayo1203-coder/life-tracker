@@ -294,7 +294,7 @@ function renderCrow(h, d, date, missed = new Set()) {
     const wSleep = S.getWhoop(date)?.sleep_hours;
     const fromWhoop = val != null && wSleep != null && Math.abs(val - wSleep) < 0.06;
     main.append(el("div", { class: "crow__sub" },
-      fromWhoop ? "via WHOOP" : val != null ? (done ? "logged" : "below target") : `~${shown} avg`));
+      fromWhoop ? "last night · via WHOOP" : val != null ? (done ? "last night · logged" : "last night · below 7.5h") : `~${shown} avg`));
     const step = el("div", { class: "stepper" });
     const mk = (lbl, dv, name) => el("button", { text: lbl, "aria-label": `${name} ${h.label}`, onClick: () => {
       const base = (S.getDay(date)[h.field] ?? S.rollingAvgSleep());
@@ -307,7 +307,7 @@ function renderCrow(h, d, date, missed = new Set()) {
   }
 
   else if (h.kind === "segments") {
-    main.append(el("div", { class: "crow__sub" }, `${d[h.field]} of ${h.max}${done ? "" : " · need " + h.threshold}`));
+    main.append(el("div", { class: "crow__sub" }, `90-min blocks · ${d[h.field]} of ${h.max}${done ? "" : " · need " + h.threshold}`));
     const segs = el("div", { class: "segs" });
     for (let i = 0; i < h.max; i++) {
       const on = d[h.field] >= i + 1;

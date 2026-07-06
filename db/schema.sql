@@ -17,7 +17,7 @@ create table if not exists daily_log (
   workout_type           workout_type,
   sleep_hours            numeric(3,1),
   morning_protocol_done  boolean     not null default false,
-  deep_work_blocks       smallint    not null default 0 check (deep_work_blocks between 0 and 3),
+  deep_work_blocks       smallint    not null default 0 check (deep_work_blocks between 0 and 6),
   no_screens_after_9     boolean     not null default false,
   journal_done           boolean     not null default false,
   journal_went_well      text,

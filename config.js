@@ -56,10 +56,13 @@ export const HABITS = [
     short: "Deep-work",
     kind: "segments",
     field: "deep_work_blocks",
-    max: 3,
-    threshold: 2, // >=2 blocks to "hit"
+    // 90-min blocks. Ceiling 6 (9h loggable) per Ricardo — entrepreneur workload.
+    // Hit bar stays 3 (4.5h ≈ the research ceiling for high-quality focus);
+    // the extra dots record ambition without making the chain unwinnable.
+    max: 6,
+    threshold: 3,
     icon: "target",
-    hit: (d) => (d.deep_work_blocks ?? 0) >= 2,
+    hit: (d) => (d.deep_work_blocks ?? 0) >= 3,
   },
   {
     id: "screens",

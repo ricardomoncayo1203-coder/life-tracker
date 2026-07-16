@@ -74,7 +74,9 @@ function renderLogin() {
     <div class="beams" aria-hidden="true"><span class="b-top"></span><span class="b-right"></span><span class="b-bottom"></span><span class="b-left"></span></div>
     <div class="crest" style="margin:0 auto 22px">R</div><h1>Command Console</h1><p>Sign in to sync across your devices.</p>`;
   const email = el("input", { type: "email", placeholder: "you@email.com", autocomplete: "email" });
-  const btn = el("button", { class: "btn btn--primary btn--block", text: "Send magic link" });
+  const pass = el("input", { type: "password", placeholder: "password", autocomplete: "current-password" });
+  const signBtn = el("button", { class: "btn btn--primary btn--block", text: "Sign in" });
+  const linkBtn = el("button", { class: "btn btn--ghost btn--block", style: "margin-top:8px", text: "Email me a sign-in link instead" });
   const note = el("div", { class: "login__note" });
   const code = el("input", {
     type: "text", autocomplete: "one-time-code",
@@ -84,23 +86,34 @@ function renderLogin() {
 
   const friendly = (e) => {
     const m = (e?.message || "").toLowerCase();
+    if (m.includes("invalid login credentials"))
+      return "Wrong email or password. No password set yet? On your signed-in laptop: Review tab → Account → set one.";
     if (m.includes("rate limit")) return "Email limit reached — Supabase's mailer allows a few per hour. Wait a bit, then try once.";
-    if (m.includes("expired") || m.includes("invalid")) return "Code invalid or expired — request a fresh email and use its code.";
+    if (m.includes("expired") || m.includes("invalid")) return "Link invalid or expired — request a fresh email and use it promptly.";
     return e?.message || "Something failed — try again.";
   };
 
-  btn.addEventListener("click", async () => {
+  signBtn.addEventListener("click", async () => {
     if (!email.value.includes("@")) { email.focus(); return; }
-    btn.textContent = "Sending…"; btn.disabled = true;
+    if (!pass.value) { pass.focus(); return; }
+    signBtn.textContent = "Signing in…"; signBtn.disabled = true;
+    try { await S.signInPassword(email.value.trim(), pass.value); /* auth listener takes over */ }
+    catch (e) { note.textContent = friendly(e); signBtn.disabled = false; signBtn.textContent = "Sign in"; }
+  });
+  pass.addEventListener("keydown", (e) => { if (e.key === "Enter") signBtn.click(); });
+
+  linkBtn.addEventListener("click", async () => {
+    if (!email.value.includes("@")) { email.focus(); return; }
+    linkBtn.textContent = "Sending…"; linkBtn.disabled = true;
     try {
       await S.signIn(email.value.trim());
-      note.textContent = "Email sent. In Mail: long-press the sign-in link → Copy Link → paste it below. (Don't tap the link — that uses it up in Safari.)";
+      note.textContent = "Email sent. In Mail: long-press the sign-in link → Copy Link → paste it below. (Don't tap it — that uses it up in Safari.)";
       code.classList.remove("hidden"); verifyBtn.classList.remove("hidden");
-      btn.textContent = "Resend"; btn.disabled = false; btn.classList.remove("btn--primary");
+      linkBtn.textContent = "Resend link"; linkBtn.disabled = false;
       code.focus();
     } catch (e) {
       note.textContent = friendly(e);
-      btn.disabled = false; btn.textContent = "Send magic link";
+      linkBtn.disabled = false; linkBtn.textContent = "Email me a sign-in link instead";
     }
   });
   verifyBtn.addEventListener("click", async () => {
@@ -109,12 +122,12 @@ function renderLogin() {
     verifyBtn.textContent = "Verifying…"; verifyBtn.disabled = true;
     try {
       if (v.includes("://") || v.includes("token")) await S.verifyPastedLink(v);
-      else if (/^\d{6}$/.test(v)) await S.verifyCode(email.value.trim(), v); // 6-digit path, if ever available
+      else if (/^\d{6}$/.test(v)) await S.verifyCode(email.value.trim(), v);
       else throw new Error("Paste the full sign-in link from the email (long-press it → Copy Link).");
       /* auth listener takes it from here */
     } catch (e) { note.textContent = friendly(e); verifyBtn.disabled = false; verifyBtn.textContent = "Verify"; }
   });
-  card.append(email, btn, code, verifyBtn, note);
+  card.append(email, pass, signBtn, linkBtn, code, verifyBtn, note);
   node.append(card);
   document.body.append(node);
 }
@@ -620,6 +633,28 @@ function renderReview() {
     onClick: () => exportWeek(ws, sum, rating) });
 
   view.append(head, el("div", { class: "split-2" }, weighCard, rateCard), el("div", { class: "section-gap" }, sumCard), exportBtn);
+
+  // account — set a password once (from this signed-in device) for instant phone sign-in
+  if (S.getUser()) {
+    const acct = el("div", { class: "card section-gap" });
+    acct.append(el("div", { class: "eyebrow-row" },
+      el("span", { class: "eyebrow" }, "Account · password for phone sign-in")));
+    const pw = el("input", { type: "password", class: "setpass", placeholder: "new password (8+ characters)", autocomplete: "new-password" });
+    const save = el("button", { class: "btn", text: "Set password" });
+    const msg = el("div", { class: "login__note", style: "text-align:left;margin-top:10px" });
+    save.addEventListener("click", async () => {
+      if (pw.value.length < 8) { msg.textContent = "Use at least 8 characters."; pw.focus(); return; }
+      save.textContent = "Saving…"; save.disabled = true;
+      try {
+        await S.setPassword(pw.value);
+        pw.value = "";
+        msg.textContent = "Password set. On your phone: email + this password → Sign in. Done.";
+      } catch (e) { msg.textContent = e?.message || "Couldn't set it — try again."; }
+      save.disabled = false; save.textContent = "Set password";
+    });
+    acct.append(el("div", { style: "display:flex;gap:10px" }, pw, save), msg);
+    view.append(acct);
+  }
 }
 
 function exportWeek(ws, sum, rating) {

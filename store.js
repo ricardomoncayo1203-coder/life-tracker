@@ -302,6 +302,18 @@ export async function signIn(email) {
   });
   if (error) throw error;
 }
+// Password auth — the primary path. No emails, no rate limits, PWA-safe.
+export async function signInPassword(email, password) {
+  if (!sb) throw new Error("cloud-not-configured");
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+}
+// One-time, from an already-signed-in device: give the account a password.
+export async function setPassword(password) {
+  if (!sb || !currentUser) throw new Error("sign in first");
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) throw error;
+}
 export async function signOut() { if (sb) await sb.auth.signOut(); currentUser = null; emitAuth(); }
 // 6-digit code from the same email — completes sign-in INSIDE the installed PWA
 // (iOS opens magic links in Safari, whose storage the home-screen app can't see).

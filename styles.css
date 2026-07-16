@@ -395,6 +395,14 @@ svg { display: block; }
 .login input:focus { outline: none; border-color: var(--accent); }
 .login__note { font-size: 11px; color: var(--text-muted); margin-top: 14px; }
 
+/* account password field */
+.setpass {
+  flex: 1; min-width: 0;
+  background: var(--surface-2); border: 0.5px solid var(--rule); border-radius: 10px;
+  padding: 12px 14px; color: var(--text-primary); font-size: 14px;
+}
+.setpass:focus { outline: none; border-color: var(--accent); }
+
 /* ---------- Misc ---------- */
 .section-gap { margin-top: 22px; }
 .eyebrow-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
